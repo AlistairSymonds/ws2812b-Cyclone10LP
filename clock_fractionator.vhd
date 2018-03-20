@@ -1,0 +1,41 @@
+--library ieee;
+--use ieee.std_logic_1164.all;
+--entity clock_fractionator is
+--	port(
+--		clk_in : in std_logic;
+--		clk_out : out std_logic;
+--		numerator : in integer;
+--		denominator : in integer
+--	);
+--end entity;
+--
+--architecture arch of clock_fractionator is
+--	signal num_count, den_count : integer;
+--	signal new_clk : std_logic := '0';
+--	
+--	begin
+--	
+--	denom_proc : process(clk_in)
+--	begin
+--		if den_count >= denominator then
+--			den_count <= 0;
+--			num_count <= num_count + 1;
+--		
+--		else
+--			den_count <= den_count + 1;
+--		end if;
+--	end process;
+--	
+--	num_proc : process(den_count)
+--	begin
+--		if num_count >= numerator then
+--			num_count <= 0;
+--			new_clk <= not new_clk;
+--		else
+--			num_count <= num_count + 1;
+--		end if;
+--	end process;
+--	
+--	clk_out <= new_clk;
+--
+--end architecture;
