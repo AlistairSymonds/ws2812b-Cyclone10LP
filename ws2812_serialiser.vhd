@@ -36,7 +36,6 @@ begin
 			if(write_enable = '1' and done = '1') then
 				bit_value <= bit_value_in;
 				done <= '0';
-				cycle_counter <= 0;
 			end if;
 		end if;
 		
