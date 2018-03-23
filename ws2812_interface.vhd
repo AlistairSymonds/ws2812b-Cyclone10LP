@@ -5,6 +5,7 @@ entity ws2812_interface is
 
 	port(
 		clk : in std_logic;
+		request_write : in std_logic;
 		R : in std_logic_vector(7 downto 0);
 		G : in std_logic_vector(7 downto 0);
 		B : in std_logic_vector(7 downto 0);
@@ -23,6 +24,7 @@ architecture arch of ws2812_interface is
 	component ws2812b_serialiser is
 		port(
 			clk : in std_logic;
+			request_write : in std_logic;
 			bit_value_in : in std_logic;
 			write_enable : in std_logic;
 			output : out std_logic;

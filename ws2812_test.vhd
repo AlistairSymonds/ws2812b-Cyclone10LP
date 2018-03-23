@@ -12,106 +12,56 @@ end entity;
 
 architecture arch of ws2812_test is
 
-	signal red, green, blue : std_logic_vector(7 downto 0);
-	
-	component sram is
-	generic(
-		WORD_SIZE : in integer;
-		NUM_WORDS : in integer
-	);
-	
-	port(
-		clk : in std_logic;
-		
-		r_addr : in unsigned(7 downto 0);
-		r_val : out std_logic_vector(WORD_SIZE-1 downto 0);
-		
-		w_addr : in unsigned(7 downto 0);
-		w_val : in std_logic_vector(WORD_SIZE-1 downto 0);
-		w_enable : in std_logic
-	);
-	end component;
-	signal ram_r_addr, ram_w_addr : unsigned (7 downto 0);
-	signal ram_r_val, ram_w_val : std_logic_vector(7 downto 0);
-	signal ram_w_enable : std_logic;
 
-
-	component ws2812_interface is
+	component WS2812_container is
+		generic(num_leds : integer);
 		port(
 			clk : in std_logic;
-			R : in std_logic_vector(7 downto 0);
-			G : in std_logic_vector(7 downto 0);
-			B : in std_logic_vector(7 downto 0);
-			ready_flag : out std_logic;
+			w_addr : in unsigned((2**num_leds)*3);
+			w_val : in std_logic_vector(7 downto 0);
+			w_enable : in std_logic;
+			output_requested : in std_logic
 			serial_out : out std_logic
-		);	
+		);
+
 	end component;
 	
-	signal interface_ready : std_logic;
 	
+	-- test rom
 	
-	signal write_req : std_logic;
+	component test_rom is
+		port(
+			r_addr : in unsigned(3 downto 0);
+			r_val : out std_logic_vector(7 downto 0)
+		);
+	end component;
+	signal address : unsigned(3 downto 0) := 0;
+	signal test_val : std_logic_vector(7 downto 0);
+	
+	--end test rom
+	
 ------ instantiations
 	begin
-	write_req <= not USER_PB(0);
-	
-	strip_buffer : sram
-	generic map (
-		WORD_SIZE => 8,
-		NUM_WORDS => 16
-	)
-	port map(
-		clk => C10_CLk50M,
-		r_addr => ram_r_addr,
-		r_val => ram_r_val,
-		w_addr => ram_w_addr,
-		w_val => ram_w_val,
-		w_enable => ram_w_enable
-	);
-	
-	
-	leds_out : ws2812_interface
-	port map(
-		clk => C10_CLk50M,
-		R => red,
-		G => green,
-		B => blue,
-		ready_flag => interface_ready,
-		serial_out => GPIO(0)
-	);
-	
-	set_state : process(clk, USER_PB(0), interface_ready)
-	begin
-		if(rising_edge(clk)) then
-		
-			if(states = waiting and interface_ready = '1') then
-				if(write_req = '1') then
-					state <= writing;
-				else
-					state <= waiting;
-				end if;
-			elsif(states = writing) then
-				ram_r_addr <= ram_r_addr + 1;
-			end if;
-		end if;
-	end process;
-	
-	
-	set_outputs : process(state)
-	begin
-		if(state = waiting) then
+
+		leds : WS2812_container
+			generic map (num_leds => 4)
+			port map(
+				clk => C10_CLK50M,
+				w_addr =>
+				w_val =>
+				w_enable =>
+				output_requested => USER_PB(0),
+				serial_out => GPIO(0)
 			
-		elsif(state = writing) then
+			);	
 			
-		end if;
-	end process;
-	
-	
-	
-	
-	
-	
-	
+			
+			
+		test_data : test_rom
+			port map(
+				r_addr => address,
+				r_val => test_val
+			);
 	
 	
 end arch;

@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 entity ws2812b_serialiser is
 	port(
 		clk : in std_logic;
+		request_write : in std_logic;
 		bit_value_in : in std_logic;
 		write_enable : in std_logic;
 		output : out std_logic;
@@ -62,6 +63,11 @@ begin
 				cycle_counter <= 0;
 				done <= '1';
 			end if;
+			
+			if(done = '1' and request_write = '0') then
+				output <= '0';
+			end if;
+			
 		end if;
 	end process;
 	
