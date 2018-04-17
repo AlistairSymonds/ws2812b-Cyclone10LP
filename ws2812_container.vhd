@@ -6,10 +6,10 @@ entity WS2812_container is
 	generic(num_leds : integer);
 	port(
 		clk : in std_logic;
-		w_addr : in unsigned((2**num_leds)*3);
+		w_addr : in unsigned(3 downto 0);
 		w_val : in std_logic_vector(7 downto 0);
 		w_enable : in std_logic;
-		output_requested : in std_logic
+		output_requested : in std_logic;
 		serial_out : out std_logic
 	);
 
@@ -48,6 +48,7 @@ architecture arch of ws2812_container is
 	component ws2812_interface is
 		port(
 			clk : in std_logic;
+			request_write : in std_logic;
 			R : in std_logic_vector(7 downto 0);
 			G : in std_logic_vector(7 downto 0);
 			B : in std_logic_vector(7 downto 0);
@@ -55,6 +56,7 @@ architecture arch of ws2812_container is
 			serial_out : out std_logic
 		);	
 	end component;
+	signal request_write : std_logic;
 	signal interface_ready : std_logic;
 	signal red, green, blue : std_logic_vector(7 downto 0);
 	-- END SERIALISER
@@ -78,13 +80,17 @@ architecture arch of ws2812_container is
 	
 begin
 
+	ram_w_val <= w_val;
+	ram_w_addr <= "0000" & w_addr;
+	ram_w_enable <= w_enable;
+
 	strip_buffer : sram
 	generic map (
 		WORD_SIZE => 8,
 		NUM_WORDS => 16
 	)
 	port map(
-		clk => C10_CLk50M,
+		clk => clk,
 		r_addr => ram_r_addr,
 		r_val => ram_r_val,
 		w_addr => ram_w_addr,
@@ -95,12 +101,13 @@ begin
 	
 	leds_out : ws2812_interface
 	port map(
-		clk => C10_CLk50M,
+		clk => clk,
+		request_write => request_write,
 		R => red,
 		G => green,
 		B => blue,
 		ready_flag => interface_ready,
-		serial_out => GPIO(0)
+		serial_out => serial_out
 	);
 	
 

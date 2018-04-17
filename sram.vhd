@@ -21,7 +21,7 @@ entity sram is
 end entity;
 
 architecture arch of sram is
-	type data_store is array (0 to (2**NUM_WORDS-1)) of std_logic_vector(WORD_SIZE-1 downto 0);
+	type data_store is array (0 to (15)) of std_logic_vector(WORD_SIZE-1 downto 0);
 	
 	signal data : data_store :=((others=> (others=>'0')));
 	

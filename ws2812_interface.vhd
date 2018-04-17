@@ -37,6 +37,7 @@ architecture arch of ws2812_interface is
 		--component instantiation
 		ser : ws2812b_serialiser port map(
 			clk => clk,
+			request_write => request_write,
 			bit_value_in => current_bit,
 			write_enable => serialiser_write,
 			output => serial_out,
