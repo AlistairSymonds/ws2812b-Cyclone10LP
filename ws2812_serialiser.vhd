@@ -3,11 +3,11 @@ use ieee.std_logic_1164.all;
 entity ws2812b_serialiser is
 	port(
 		clk : in std_logic;
-		request_write : in std_logic;
+		reqw : in std_logic;
 		bit_value_in : in std_logic;
-		write_enable : in std_logic;
+		req_out : in std_logic;
 		output : out std_logic;
-		done_flag : out std_logic
+		busy_flag : out std_logic
 	);
 
 end entity;
@@ -28,50 +28,92 @@ architecture arch of ws2812b_serialiser is
 	signal cycle_counter : integer range 0 to 64;
 	
 	signal bit_value : std_logic;
-	signal done : std_logic := '0';
 
+	signal busy : std_logic;
+	
+	type state_t is (idle, bit_loaded, outputting_high, outputting_low);
+	signal state : state_t;
+	
 begin	
-	save_proc : process(clk)
+	
+	set_state : process(clk)
 	begin
-		if rising_edge(clk) then
-			if(write_enable = '1' and done = '1') then
-				bit_value <= bit_value_in;
-				done <= '0';
-			end if;
+		if(rising_edge(clk)) then
+			case state is
+			
+				when idle =>
+					if(reqw = '1') then
+						bit_value <= bit_value_in;
+						state <= outputting_high;
+					end if;
+					cycle_counter <= 0;
+				
+				
+				when bit_loaded =>
+					if(req_out = '1') then
+						state <= outputting_high;
+					end if;
+				
+					cycle_counter <= 0;
+				when outputting_high =>
+					if(bit_value = '1') then
+						if(cycle_counter >= t1h_cycles)then
+							state <= outputting_low;
+						end if;
+					else
+						if(cycle_counter >= t0h_cycles)then
+							state <= outputting_low;
+						end if;
+					end if;
+					cycle_counter<= cycle_counter+1;
+					
+				when outputting_low =>
+					if(bit_value = '1') then
+						if(cycle_counter >= t1l_cycles+t1h_cycles)then
+							state <= idle;
+						end if;
+					else
+						if(cycle_counter >= t0l_cycles+t0h_cycles)then
+							state <= idle;
+						end if;
+					end if;
+					cycle_counter<= cycle_counter+1;
+				
+			
+			end case;
 		end if;
 		
-		if rising_edge(clk) then
-			if(done = '0') then
-				if(bit_value = '0') then
-					if(cycle_counter <= t0h_cycles) then
-						output <= '1';
-					else
-						output <= '0';
-					end if;
-					cycle_counter <= cycle_counter + 1;
-				else
-					if(cycle_counter <= t1h_cycles) then
-						output <= '1';
-					else
-						output <= '0';
-					end if;
-					cycle_counter <= cycle_counter + 1;
-				end if;
-			end if;
-			
-			if(cycle_counter >= 63) then
-				cycle_counter <= 0;
-				done <= '1';
-			end if;
-			
-			if(done = '1' and request_write = '0') then
-				output <= '0';
-			end if;
-			
-		end if;
 	end process;
+		
+		
 	
-	done_flag <= done;
+	
+	set_outputs : process(state)
+	begin
+		case state is
+			
+			when idle =>
+				output <= '0';
+				busy <= '0';
+				
+			when bit_loaded =>
+				output <= '0';
+				busy <= '0';
+				
+			when outputting_high =>
+				output <= '1';
+				busy <= '1';
+				
+			when outputting_low =>
+				output <= '0';
+				busy <= '1';
+			
+			
+		end case;
+	end process;
+		
+	
+	busy_flag <= busy;
 	
 
 end architecture;
